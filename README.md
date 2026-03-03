@@ -1,106 +1,149 @@
-# 🌡️ AI-Based Smart Thermal Fan Control System
+# 🌡️ Priority Aware Industrial Thermal AI
 
 <div align="center">
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)
-![SciPy](https://img.shields.io/badge/SciPy-8CAAE6?style=for-the-badge&logo=scipy&logoColor=white)
-![Matplotlib](https://img.shields.io/badge/Matplotlib-11557c?style=for-the-badge)
+![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white)
+![Plotly](https://img.shields.io/badge/Plotly-3F4F75?style=for-the-badge&logo=plotly&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-*Intelligent thermal regulation combining classical feedback control with adaptive AI cooling logic.*
+*Three zone thermal regulation using per-zone PyTorch policy networks, a nonlinear urgency curve, spike detection, and a live Flask web dashboard, all training continuously during simulation.*
 
 </div>
 
 ---
 
-## 📌 Project Overview
+## What This Does
 
-A real-time thermal regulation platform that dynamically adjusts cooling behavior based on temperature conditions and system load. The system models realistic thermal dynamics and evaluates intelligent cooling strategies that balance **temperature stability** and **energy efficiency**.
+This system simulates industrial thermal dynamics across three zones: CPU, Power, and Ambient and regulates temperature using a hybrid controller that combines a nonlinear urgency curve, per-zone AI policy networks, spike detection, safety overrides, and anti-windup relaxation. The policy networks train live during the simulation, adapting their behavior as thermal conditions change.
+
+Everything is visible on a live web dashboard at `http://localhost:5000` built with Flask and Plotly.
 
 ---
 
-## 🏗️ System Architecture
+## How It Works
 
 ```
-Thermal Inputs (CPU Load + Power + Ambient)
+Thermal Simulation (CPU + Power + Ambient zones)
         ↓
-  Thermal Simulation Engine    ← Dynamic temperature model
+  Thermal Coupling  ←  zones influence each other physically
+  Random Shocks     ←  sudden load spikes (5% probability per step)
         ↓
-  Hybrid Controller            ← Feedback + adaptive logic
+  Hybrid Controller Pipeline
+  ├── Safety Override   → emergency cooling if any zone > 70°C
+  ├── Spike Detector    → boost cooling if temp rises > 1.2°C/step
+  ├── Urgency Curve     → nonlinear cooling based on temperature band
+  └── AI Control        → per-zone PolicyNet fusion output
         ↓
-  Stability Constraints        ← Anti-windup + damping
+  Anti-Windup Relaxation  ←  decays cooling when temps are low
         ↓
-  Adaptive Cooling Response    ← Load-aware fan modulation
+  Live Training           ←  policy networks update every second
         ↓
-  Real-Time Monitoring         ← Live visualization dashboard
+  Flask Web Dashboard     ←  real time Plotly chart + metrics panel
 ```
 
 ---
 
-## 📊 Key Results
+## The AI Layer
 
-| Metric | Value |
-|---|---|
-| CPU Temperature | 49.6°C |
-| Power Temperature | 37.0°C |
-| Ambient Temperature | 20.0°C |
-| Cooling Intensity | 49% |
-| **Energy Efficiency** | **65%** |
-| **Thermal Safety Score** | **68%** |
-| Control Mode | Balanced Cooling |
+Each thermal zone has its own **PolicyNet** — a small PyTorch neural network that takes the full system state and outputs a cooling adjustment.
 
----
+```
+Input:  [CPU_temp/100, Power_temp/100, Ambient_temp/100]
+Hidden: Linear(3→32) → ReLU → Linear(32→1) → Tanh
+Output: cooling delta (−1 to +1)
+```
 
-## ✅ Key Features
+All three outputs are averaged and applied as a cooling adjustment. The networks train continuously using a reward function that dynamically shifts priority based on current temperature:
 
-- 🔴 **Multi-source thermal inputs** — CPU load, power dissipation, ambient temperature
-- 🧠 **Hybrid control** — PID-style feedback + adaptive response
-- ⚡ **Anti-windup constraints** — prevents overshoot during thermal spikes
-- 📉 **Adaptive cooling** — reduces fan activity under low thermal stress
-- 📊 **Real-time Matplotlib dashboard** — live temperature and cooling curves
+```python
+temp_weight  = interpolate(max_temp, [30, 70], [0.6, 2.0])  # hotter = penalize temp more
+cool_penalty = interpolate(max_temp, [30, 70], [2.0, 0.8])  # hotter = penalize cooling less
+reward = -max_temp * 0.01 * temp_weight - cooling * cool_penalty
+```
 
 ---
 
-## 🛠️ Tech Stack
+## Thermal Urgency Curve
+
+Instead of a fixed PID response, the system uses a nonlinear urgency curve that maps temperature bands to cooling aggressiveness:
+
+| Temperature Band | Cooling Increase | Mode |
+|---|---|---|
+| Below 40°C | None | Efficiency Zone |
+| 40 — 50°C | +0.01 per step | Efficiency → Balanced |
+| 50 — 60°C | +0.03 per step | Balanced Cooling |
+| Above 60°C | +0.06 per step | Performance Cooling |
+| Above 70°C | +0.15 (override) | Emergency Cooling |
+
+---
+
+## Safety and Stability
+
+**Safety Override** — if any zone exceeds 70°C, cooling jumps by 0.15 immediately regardless of the AI output.
+
+**Spike Detector** — if any zone rises faster than 1.2°C in a single step, cooling boosts by 0.1 and the mode switches to Spike Suppression.
+
+**Anti-Windup Relaxation** — prevents the controller from holding unnecessary cooling after temperatures drop. Cooling decays at 0.96× per step below 35°C and 0.98× below 45°C, with a continuous 0.99× passive decay.
+
+**Thermal Coupling** — zones are physically linked. Power temperature drifts toward CPU temperature, and Ambient drifts toward Power. This forces the controller to manage the system as a whole, not zone by zone.
+
+---
+
+## Dashboard
+
+Live web dashboard served at `http://localhost:5000`:
+
+- Temperature curves for all three zones with color coded bands (green / yellow / red)
+- Cooling percentage overlaid as a dotted line on a secondary axis
+- Sidebar panel showing live values — CPU temp, Power temp, Ambient temp, Cooling %, Energy Efficiency, Thermal Safety, current Mode
+- Updates every second
+
+---
+
+## Features
+
+- Per-zone PyTorch policy networks training live during simulation
+- Nonlinear urgency curve — not a fixed PID response
+- Thermal coupling between zones — physically realistic model
+- Spike detector catches sudden load events before they escalate
+- Anti-windup relaxation prevents overcooling during low load
+- Dynamic reward weighting — AI priorities shift with temperature
+- Flask + Plotly web dashboard, no desktop GUI dependency
+
+---
+
+## Tech Stack
 
 | Library | Purpose |
 |---|---|
-| `NumPy` | Thermal dynamics numerical modeling |
-| `SciPy` | Control mathematics, stability computations |
-| `Matplotlib` | Real-time temperature trend visualization |
+| PyTorch | Per-zone PolicyNet training and inference |
+| Flask | Web server for live dashboard |
+| Plotly | Interactive real time temperature chart |
+| NumPy | Thermal dynamics and interpolation |
+| threading | Simulation loop runs parallel to web server |
 
 ---
 
-## ⚙️ How to Run
+## Running It
 
-### 1. Clone the repository
 ```bash
 git clone https://github.com/YOUR_USERNAME/smart-thermal-control.git
 cd smart-thermal-control
-```
-
-### 2. Install dependencies
-```bash
 pip install -r requirements.txt
-```
-
-### 3. Run the simulation
-```bash
 python thermal_control.py
 ```
 
+Then open `http://localhost:5000` in your browser. The simulation starts immediately and the dashboard updates every second.
+
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 smart-thermal-control/
-├── thermal_control.py      # Main simulation — run this
-├── thermal_model.py        # Dynamic thermal simulation engine
-├── hybrid_controller.py    # PID + adaptive cooling controller
-├── stability.py            # Anti-windup and damping mechanisms
-├── visualizer.py           # Real-time Matplotlib dashboard
+├── thermal_control.py
 ├── requirements.txt
 ├── LICENSE
 └── README.md
@@ -108,32 +151,32 @@ smart-thermal-control/
 
 ---
 
-## 🏭 Applications
+## Industrial Applications
 
-**Industrial:**
 - Thermal regulation in embedded electronics and industrial computers
 - Cooling optimization in edge computing devices
 - Smart fan control for power electronics and drives
 - Industrial thermal monitoring platforms
 - Adaptive cooling logic for intelligent HVAC systems
 
-**Societal:**
+## Societal Applications
+
 - Prevention of overheating in electronic devices
 - Energy efficient cooling in consumer electronics
 - Reduced energy waste through adaptive cooling
 - Extended device lifespan through stable temperature regulation
+- Smarter home appliance thermal control
 
 ---
 
-## 👤 Author
+## Author
 
 **Vaibhav Krishna V**  
-Electronics & Communication Engineering, NMIT Bengaluru  
-USN: 1NT22EC182  
+Electronics & Communication Engineer  
 📧 vaibhavkv078@gmail.com
 
 ---
 
-## 📄 License
+## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE) for details.
