@@ -1,4 +1,4 @@
-# 🌡️ Priority Aware Industrial Thermal AI
+# 🌡️ Priority Aware Industrial Thermal AI Regulation System
 
 <div align="center">
 
