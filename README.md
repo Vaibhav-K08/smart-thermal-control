@@ -47,7 +47,7 @@ Thermal Simulation (CPU + Power + Ambient zones)
 
 ## The AI Layer
 
-Each thermal zone has its own **PolicyNet** — a small PyTorch neural network that takes the full system state and outputs a cooling adjustment.
+Each thermal zone has its own **PolicyNet** which is a small PyTorch neural network that takes the full system state and outputs a cooling adjustment.
 
 ```
 Input:  [CPU_temp/100, Power_temp/100, Ambient_temp/100]
@@ -72,8 +72,8 @@ Instead of a fixed PID response, the system uses a nonlinear urgency curve that 
 | Temperature Band | Cooling Increase | Mode |
 |---|---|---|
 | Below 40°C | None | Efficiency Zone |
-| 40 — 50°C | +0.01 per step | Efficiency → Balanced |
-| 50 — 60°C | +0.03 per step | Balanced Cooling |
+| 40-50°C | +0.01 per step | Efficiency → Balanced |
+| 50-60°C | +0.03 per step | Balanced Cooling |
 | Above 60°C | +0.06 per step | Performance Cooling |
 | Above 70°C | +0.15 (override) | Emergency Cooling |
 
@@ -81,13 +81,13 @@ Instead of a fixed PID response, the system uses a nonlinear urgency curve that 
 
 ## Safety and Stability
 
-**Safety Override** — if any zone exceeds 70°C, cooling jumps by 0.15 immediately regardless of the AI output.
+**Safety Override**: if any zone exceeds 70°C, cooling jumps by 0.15 immediately regardless of the AI output.
 
-**Spike Detector** — if any zone rises faster than 1.2°C in a single step, cooling boosts by 0.1 and the mode switches to Spike Suppression.
+**Spike Detector**: if any zone rises faster than 1.2°C in a single step, cooling boosts by 0.1 and the mode switches to Spike Suppression.
 
-**Anti-Windup Relaxation** — prevents the controller from holding unnecessary cooling after temperatures drop. Cooling decays at 0.96× per step below 35°C and 0.98× below 45°C, with a continuous 0.99× passive decay.
+**Anti-Windup Relaxation**:prevents the controller from holding unnecessary cooling after temperatures drop. Cooling decays at 0.96× per step below 35°C and 0.98× below 45°C, with a continuous 0.99× passive decay.
 
-**Thermal Coupling** — zones are physically linked. Power temperature drifts toward CPU temperature, and Ambient drifts toward Power. This forces the controller to manage the system as a whole, not zone by zone.
+**Thermal Coupling**: zones are physically linked. Power temperature drifts toward CPU temperature, and Ambient drifts toward Power. This forces the controller to manage the system as a whole, not zone by zone.
 
 ---
 
@@ -97,7 +97,7 @@ Live web dashboard served at `http://localhost:5000`:
 
 - Temperature curves for all three zones with color coded bands (green / yellow / red)
 - Cooling percentage overlaid as a dotted line on a secondary axis
-- Sidebar panel showing live values — CPU temp, Power temp, Ambient temp, Cooling %, Energy Efficiency, Thermal Safety, current Mode
+- Sidebar panel showing live values: CPU temp, Power temp, Ambient temp, Cooling %, Energy Efficiency, Thermal Safety, current Mode
 - Updates every second
 
 ---
@@ -105,11 +105,11 @@ Live web dashboard served at `http://localhost:5000`:
 ## Features
 
 - Per-zone PyTorch policy networks training live during simulation
-- Nonlinear urgency curve — not a fixed PID response
-- Thermal coupling between zones — physically realistic model
+- Nonlinear urgency curve; not a fixed PID response
+- Thermal coupling between zones; physically realistic model
 - Spike detector catches sudden load events before they escalate
 - Anti-windup relaxation prevents overcooling during low load
-- Dynamic reward weighting — AI priorities shift with temperature
+- Dynamic reward weighting; AI priorities shift with temperature
 - Flask + Plotly web dashboard, no desktop GUI dependency
 
 ---
