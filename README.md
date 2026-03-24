@@ -81,13 +81,13 @@ Instead of a fixed PID response, the system uses a nonlinear urgency curve that 
 
 ## Safety and Stability
 
-**Safety Override**: if any zone exceeds 70°C, cooling jumps by 0.15 immediately regardless of the AI output.
+**Safety Override**: If any zone exceeds 70°C, cooling jumps by 0.15 immediately regardless of the AI output.
 
-**Spike Detector**: if any zone rises faster than 1.2°C in a single step, cooling boosts by 0.1 and the mode switches to Spike Suppression.
+**Spike Detector**: If any zone rises faster than 1.2°C in a single step, cooling boosts by 0.1 and the mode switches to Spike Suppression.
 
-**Anti-Windup Relaxation**:prevents the controller from holding unnecessary cooling after temperatures drop. Cooling decays at 0.96× per step below 35°C and 0.98× below 45°C, with a continuous 0.99× passive decay.
+**Anti-Windup Relaxation**: Prevents the controller from holding unnecessary cooling after temperatures drop. Cooling decays at 0.96× per step below 35°C and 0.98× below 45°C, with a continuous 0.99× passive decay.
 
-**Thermal Coupling**: zones are physically linked. Power temperature drifts toward CPU temperature, and Ambient drifts toward Power. This forces the controller to manage the system as a whole, not zone by zone.
+**Thermal Coupling**: Zones are physically linked. Power temperature drifts toward CPU temperature, and Ambient drifts toward Power. This forces the controller to manage the system as a whole, not zone by zone.
 
 ---
 
