@@ -1,4 +1,4 @@
-# THERMIS-X — Adaptive Thermocouple-Driven Industrial Thermal Intelligence
+# THERMIS-X: Adaptive Thermocouple-Driven Industrial Thermal Intelligence
 
 <div align="center">
 
