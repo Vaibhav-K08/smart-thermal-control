@@ -250,6 +250,6 @@ The system handles failure gracefully: sensor faults display as FAULT rather tha
 
 **Vaibhav Krishna V**  
 Electronics and Communication Engineer 
-[GitHub](https://github.com/vaibhavkrishnav) · [LinkedIn](https://linkedin.com/in/vaibhavkrishnav)
+[GitHub](https://github.com/vaibhav-krishna-v ) · [LinkedIn](https://linkedin.com/in/vkv078)
 
 > *Built to demonstrate that rigorous sensor engineering, adaptive control theory, and production-quality software are not separate disciplines — they are one.*
